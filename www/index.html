@@ -91,15 +91,10 @@
     var url = normalize(raw);
     if (!url) { say("That doesn't look like an address.", true); return; }
     say("Connecting to " + url + " …");
-    // Check the server answers before leaving this page, so a typo doesn't strand you.
-    var ctl = new AbortController();
-    var t = setTimeout(function () { ctl.abort(); }, 6000);
-    fetch(url, { mode: "no-cors", signal: ctl.signal })
-      .then(function () { clearTimeout(t); remember(url); window.location.href = url; })
-      .catch(function () {
-        clearTimeout(t);
-        say("No response from " + url + ". Check the address, port, and that you're on the same network.", true);
-      });
+    // Go straight to the server. (A pre-check with fetch() is blocked inside the
+    // app because the page is https and the server is plain http.)
+    remember(url);
+    window.location.href = url;
   }
 
   document.getElementById("f").addEventListener("submit", function (e) {
