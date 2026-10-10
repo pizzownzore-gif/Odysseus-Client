@@ -1,0 +1,9 @@
+{
+  "appId": "com.example.odysseuslauncher",
+  "appName": "Odysseus",
+  "webDir": "www",
+  "server": {
+    "cleartext": true,
+    "allowNavigation": ["*"]
+  }
+}

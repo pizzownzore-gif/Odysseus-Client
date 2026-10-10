@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161a">
+<title>Odysseus</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1d2026; --line: #2d323b;
+    --text: #e8e6e1; --muted: #9096a1; --accent: #c9a24b; --err: #e07a6b;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+  }
+  main { width: 100%; max-width: 420px; }
+  h1 { font: 600 28px/1.2 Georgia, serif; margin: 0 0 6px; }
+  p { color: var(--muted); margin: 0 0 24px; }
+  label { display: block; font-size: 14px; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 14px; font-size: 16px;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    width: 100%; margin-top: 14px; padding: 14px; font-size: 16px; font-weight: 600;
+    background: var(--accent); color: #14161a; border: 0; border-radius: 8px;
+  }
+  button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  #msg { min-height: 1.5em; margin-top: 12px; font-size: 14px; color: var(--muted); }
+  #msg.err { color: var(--err); }
+  #recent { margin-top: 18px; display: none; }
+  #recent button {
+    background: transparent; color: var(--text); border: 1px solid var(--line);
+    font-weight: 400; text-align: left; margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Odysseus</h1>
+  <p>Enter the address of your server.</p>
+
+  <form id="f" autocomplete="off">
+    <label for="addr">Server address</label>
+    <input id="addr" type="text" inputmode="url" autocapitalize="off" autocorrect="off"
+           spellcheck="false" placeholder="192.168.1.50:7000">
+    <button type="submit">Connect</button>
+  </form>
+  <div id="msg" role="status"></div>
+
+  <div id="recent">
+    <label>Recent</label>
+    <div id="recentList"></div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var KEY = "odysseus.addr", HIST = "odysseus.hist";
+  var addr = document.getElementById("addr");
+  var msg = document.getElementById("msg");
+
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // "192.168.1.50:7000" -> "http://192.168.1.50:7000"
+  function normalize(raw) {
+    raw = (raw || "").trim();
+    if (!raw) return null;
+    if (!/^https?:\/\//i.test(raw)) raw = "http://" + raw;
+    try { return new URL(raw).href; } catch (e) { return null; }
+  }
+
+  function remember(url) {
+    set(KEY, url);
+    var h = []; try { h = JSON.parse(get(HIST) || "[]"); } catch (e) {}
+    h = [url].concat(h.filter(function (u) { return u !== url; })).slice(0, 4);
+    set(HIST, JSON.stringify(h));
+  }
+
+  function say(text, isErr) { msg.textContent = text; msg.className = isErr ? "err" : ""; }
+
+  function connect(raw) {
+    var url = normalize(raw);
+    if (!url) { say("That doesn't look like an address.", true); return; }
+    say("Connecting to " + url + " …");
+    // Check the server answers before leaving this page, so a typo doesn't strand you.
+    var ctl = new AbortController();
+    var t = setTimeout(function () { ctl.abort(); }, 6000);
+    fetch(url, { mode: "no-cors", signal: ctl.signal })
+      .then(function () { clearTimeout(t); remember(url); window.location.href = url; })
+      .catch(function () {
+        clearTimeout(t);
+        say("No response from " + url + ". Check the address, port, and that you're on the same network.", true);
+      });
+  }
+
+  document.getElementById("f").addEventListener("submit", function (e) {
+    e.preventDefault(); connect(addr.value);
+  });
+
+  // Recent addresses
+  var hist = []; try { hist = JSON.parse(get(HIST) || "[]"); } catch (e) {}
+  if (hist.length) {
+    var list = document.getElementById("recentList");
+    hist.forEach(function (u) {
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = u;
+      b.onclick = function () { addr.value = u; connect(u); };
+      list.appendChild(b);
+    });
+    document.getElementById("recent").style.display = "block";
+  }
+
+  var saved = get(KEY);
+  if (saved) addr.value = saved;
+
+  // Coming back here with the Back button means "let me change the address",
+  // so only auto-connect on a fresh launch.
+  var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+  var cameBack = nav && nav.type === "back_forward";
+  window.addEventListener("pageshow", function (e) { if (e.persisted) say(""); });
+  if (saved && !cameBack) connect(saved);
+})();
+</script>
+</body>
+</html>
