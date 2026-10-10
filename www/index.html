@@ -3,55 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#14161a">
-<title>Odysseus</title>
+<meta name="theme-color" content="#272b34">
+<title>Odysseus Client</title>
 <style>
   :root {
-    --bg: #14161a; --panel: #1d2026; --line: #2d323b;
-    --text: #e8e6e1; --muted: #9096a1; --accent: #c9a24b; --err: #e07a6b;
+    --bg: #272b34;
+    --card: #101010;
+    --card-line: #2e5460;
+    --field: #272b34;
+    --field-line: #3b5963;
+    --label: #6f9aa5;
+    --text: #e6e8ea;
+    --muted: #7d8c94;
+    --accent: #b0555d;
+    --accent-hi: #e0707c;
+    --err: #e8808a;
+    --mono: "Fira Code", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Roboto Mono", monospace;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
     background: var(--bg); color: var(--text);
-    font: 16px/1.5 system-ui, sans-serif;
+    font-family: var(--mono); font-size: 15px; line-height: 1.5;
     display: flex; align-items: center; justify-content: center;
-    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+    padding: calc(env(safe-area-inset-top) + 16px) 28px calc(env(safe-area-inset-bottom) + 16px);
+    overflow: hidden;
   }
-  main { width: 100%; max-width: 420px; }
-  h1 { font: 600 28px/1.2 Georgia, serif; margin: 0 0 6px; }
-  p { color: var(--muted); margin: 0 0 24px; }
-  label { display: block; font-size: 14px; margin-bottom: 6px; }
+  #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+
+  .card {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    border-radius: 22px;
+    padding: 40px 28px 34px;
+    margin-bottom: 18vh;
+  }
+  .brand {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .brand svg { width: 30px; height: 30px; flex: none; }
+  h1 {
+    margin: 0; font-size: 28px; font-weight: 600; letter-spacing: 1px;
+    color: var(--accent-hi);
+    background: linear-gradient(90deg, #e0707c, #d79aa6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { text-align: center; color: var(--muted); font-size: 13px; margin: 0 0 28px; }
+
+  label { display: block; color: var(--label); font-size: 15px; margin: 0 0 8px 2px; letter-spacing: .5px; }
   input {
-    width: 100%; padding: 14px; font-size: 16px;
-    background: var(--panel); color: var(--text);
-    border: 1px solid var(--line); border-radius: 8px;
+    width: 100%; padding: 15px 16px; font: inherit; font-size: 16px; color: var(--text);
+    background: var(--field); border: 1px solid var(--field-line); border-radius: 10px;
   }
-  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button {
-    width: 100%; margin-top: 14px; padding: 14px; font-size: 16px; font-weight: 600;
-    background: var(--accent); color: #14161a; border: 0; border-radius: 8px;
+  input::placeholder { color: #55656d; }
+  input:focus { outline: 2px solid var(--accent-hi); outline-offset: 2px; border-color: var(--accent); }
+
+  .go {
+    width: 100%; margin-top: 24px; padding: 17px; font: inherit; font-size: 18px; font-weight: 700;
+    letter-spacing: 1px; color: #fff; background: var(--accent);
+    border: 0; border-radius: 10px; cursor: pointer;
   }
-  button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-  #msg { min-height: 1.5em; margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .go:active { background: #98454d; }
+  .go:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+  #msg { min-height: 1.4em; margin-top: 14px; font-size: 13px; color: var(--muted); text-align: center; }
   #msg.err { color: var(--err); }
-  #recent { margin-top: 18px; display: none; }
-  #recent button {
-    background: transparent; color: var(--text); border: 1px solid var(--line);
-    font-weight: 400; text-align: left; margin-top: 8px;
+
+  #recent { margin-top: 22px; display: none; }
+  #recent label { font-size: 13px; }
+  #recentList button {
+    display: block; width: 100%; margin-top: 8px; padding: 11px 14px;
+    font: inherit; font-size: 14px; text-align: left; color: var(--text);
+    background: transparent; border: 1px solid var(--field-line); border-radius: 8px;
   }
+  #recentList button:active { background: var(--field); }
+
+  .ver { position: fixed; right: 18px; bottom: calc(env(safe-area-inset-bottom) + 14px); z-index: 1; font-size: 12px; color: #3f4a52; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Odysseus</h1>
-  <p>Enter the address of your server.</p>
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<main class="card">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M15 4 L15 21 L5 21 Z" fill="#e0707c"/>
+      <path d="M17.5 9 L17.5 21 L24 21 Z" fill="#b0555d"/>
+      <path d="M3 24.5 C9 29 21 29 29 22" fill="none" stroke="#e0707c" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+    <h1>Odysseus Client</h1>
+  </div>
+  <p class="sub">Enter the address of your server.</p>
 
   <form id="f" autocomplete="off">
     <label for="addr">Server address</label>
     <input id="addr" type="text" inputmode="url" autocapitalize="off" autocorrect="off"
            spellcheck="false" placeholder="192.168.1.50:7000">
-    <button type="submit">Connect</button>
+    <button class="go" type="submit">Connect</button>
   </form>
   <div id="msg" role="status"></div>
 
@@ -60,8 +111,92 @@
     <div id="recentList"></div>
   </div>
 </main>
+<div class="ver">v1.0.0</div>
 
 <script>
+/* ---------- background: grid with dots travelling along the lines ---------- */
+(function () {
+  var cv = document.getElementById("bg"), ctx = cv.getContext("2d");
+  var CELL = 36, W = 0, H = 0, COLS = 0, ROWS = 0, dpr = 1, dots = [];
+  var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function rnd(n) { return Math.floor(Math.random() * n); }
+
+  function spawn(d) {
+    // start on a random edge, heading inward along a grid line
+    var horiz = Math.random() < 0.5;
+    if (horiz) {
+      d.gy = rnd(ROWS + 1); d.dy = 0;
+      if (Math.random() < 0.5) { d.gx = 0; d.dx = 1; } else { d.gx = COLS; d.dx = -1; }
+    } else {
+      d.gx = rnd(COLS + 1); d.dx = 0;
+      if (Math.random() < 0.5) { d.gy = 0; d.dy = 1; } else { d.gy = ROWS; d.dy = -1; }
+    }
+    d.t = Math.random();
+    d.speed = 40 + Math.random() * 70;           // px per second
+    d.life = 0;
+    return d;
+  }
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    COLS = Math.ceil(W / CELL); ROWS = Math.ceil(H / CELL);
+    var n = Math.max(10, Math.round((COLS * ROWS) / 28));
+    dots = [];
+    for (var i = 0; i < n; i++) dots.push(spawn({}));
+    drawGrid();
+  }
+
+  function drawGrid() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(130,170,190,0.09)";
+    ctx.beginPath();
+    for (var x = 0; x <= COLS; x++) { ctx.moveTo(x * CELL + .5, 0); ctx.lineTo(x * CELL + .5, H); }
+    for (var y = 0; y <= ROWS; y++) { ctx.moveTo(0, y * CELL + .5); ctx.lineTo(W, y * CELL + .5); }
+    ctx.stroke();
+  }
+
+  function step(d, dt) {
+    d.t += (d.speed * dt) / CELL;
+    while (d.t >= 1) {
+      d.t -= 1; d.gx += d.dx; d.gy += d.dy;
+      if (d.gx < 0 || d.gx > COLS || d.gy < 0 || d.gy > ROWS) { spawn(d); d.t = 0; return; }
+      if (Math.random() < 0.22) {                 // turn 90 degrees at an intersection
+        var s = Math.random() < 0.5 ? 1 : -1, ox = d.dx;
+        d.dx = d.dy * s; d.dy = ox * s;
+        if (d.dx === 0 && d.dy === 0) { d.dx = 1; }
+      }
+    }
+  }
+
+  var last = 0;
+  function frame(ts) {
+    var dt = Math.min((ts - last) / 1000 || 0, 0.05); last = ts;
+    drawGrid();
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i]; step(d, dt);
+      var x = (d.gx + d.dx * d.t) * CELL + .5, y = (d.gy + d.dy * d.t) * CELL + .5;
+      var tx = x - d.dx * 26, ty = y - d.dy * 26;
+      var g = ctx.createLinearGradient(tx, ty, x, y);
+      g.addColorStop(0, "rgba(220,240,255,0)"); g.addColorStop(1, "rgba(220,240,255,0.55)");
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+      ctx.fillStyle = "rgba(235,248,255,0.95)";
+      ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 6.2832); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+  if (!still) requestAnimationFrame(frame);
+})();
+
+/* ---------- launcher logic ---------- */
 (function () {
   var KEY = "odysseus.addr", HIST = "odysseus.hist";
   var addr = document.getElementById("addr");
@@ -91,8 +226,6 @@
     var url = normalize(raw);
     if (!url) { say("That doesn't look like an address.", true); return; }
     say("Connecting to " + url + " …");
-    // Go straight to the server. (A pre-check with fetch() is blocked inside the
-    // app because the page is https and the server is plain http.)
     remember(url);
     window.location.href = url;
   }
@@ -101,7 +234,6 @@
     e.preventDefault(); connect(addr.value);
   });
 
-  // Recent addresses
   var hist = []; try { hist = JSON.parse(get(HIST) || "[]"); } catch (e) {}
   if (hist.length) {
     var list = document.getElementById("recentList");
@@ -117,8 +249,7 @@
   var saved = get(KEY);
   if (saved) addr.value = saved;
 
-  // Coming back here with the Back button means "let me change the address",
-  // so only auto-connect on a fresh launch.
+  // Back button from Odysseus = "change the address", so only auto-connect on a fresh launch.
   var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
   var cameBack = nav && nav.type === "back_forward";
   window.addEventListener("pageshow", function (e) { if (e.persisted) say(""); });
