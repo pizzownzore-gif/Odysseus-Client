@@ -15,6 +15,5 @@ jobs:
       - run: cd android && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: odysseus-app
-          path: android/app/build/outputs/apk/debug/*.apk
-                    
+          name: odysseus-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
