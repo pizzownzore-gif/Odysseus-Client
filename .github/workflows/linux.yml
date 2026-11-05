@@ -1,0 +1,16 @@
+name: Build Linux
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: cp -r www linux/www
+      - run: mkdir -p linux/build && cp assets/icon-only.png linux/build/icon.png
+      - run: cd linux && npm install && npx electron-builder --linux AppImage --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sd-client-linux
+          path: linux/dist/*.AppImage
