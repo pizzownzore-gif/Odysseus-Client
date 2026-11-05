@@ -251,7 +251,7 @@
 
   // Back button from Odysseus = "change the address", so only auto-connect on a fresh launch.
   var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
-  var cameBack = nav && nav.type === "back_forward";
+  var cameBack = (nav && nav.type === "back_forward") || location.hash === "#change";
   window.addEventListener("pageshow", function (e) { if (e.persisted) say(""); });
   if (saved && !cameBack) connect(saved);
 })();
